@@ -1,0 +1,24 @@
+{
+	"compilerOptions": {
+		"strict": true,
+		"module": "commonjs",
+		"moduleResolution": "node",
+		"target": "es2019",
+		"lib": ["es2019"],
+		"declaration": true,
+		"skipLibCheck": true,
+		"resolveJsonModule": true,
+		"esModuleInterop": true,
+		"forceConsistentCasingInFileNames": true,
+		"outDir": "./dist",
+		"rootDir": "."
+	},
+	"include": [
+		"credentials/**/*.ts",
+		"nodes/**/*.ts"
+	],
+	"exclude": [
+		"node_modules/**",
+		"dist/**"
+	]
+}

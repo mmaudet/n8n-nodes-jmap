@@ -1,0 +1,61 @@
+{
+  "name": "n8n-nodes-jmap",
+  "version": "0.1.0",
+  "description": "n8n community node for JMAP email protocol (RFC 8620/8621) - Works with Apache James, Twake Mail, Fastmail, and other JMAP-compatible servers",
+  "keywords": [
+    "n8n-community-node-package",
+    "jmap",
+    "email",
+    "apache-james",
+    "twake-mail",
+    "fastmail",
+    "rfc8620",
+    "rfc8621"
+  ],
+  "license": "AGPL-3.0",
+  "homepage": "https://github.com/mmaudet/n8n-nodes-jmap",
+  "author": {
+    "name": "Michel-Marie Maudet",
+    "url": "https://github.com/mmaudet"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mmaudet/n8n-nodes-jmap.git"
+  },
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc && gulp build:icons",
+    "dev": "tsc --watch",
+    "format": "prettier nodes credentials --write",
+    "lint": "eslint 'nodes/**/*.ts' 'credentials/**/*.ts'",
+    "lintfix": "eslint 'nodes/**/*.ts' 'credentials/**/*.ts' --fix",
+    "prepublishOnly": "npm run build && npm run lint -q"
+  },
+  "files": [
+    "dist"
+  ],
+  "n8n": {
+    "n8nNodesApiVersion": 1,
+    "credentials": [
+      "dist/credentials/JmapApi.credentials.js",
+      "dist/credentials/JmapOAuth2Api.credentials.js"
+    ],
+    "nodes": [
+      "dist/nodes/Jmap/Jmap.node.js",
+      "dist/nodes/Jmap/JmapTrigger.node.js"
+    ]
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@typescript-eslint/eslint-plugin": "^7.0.0",
+    "@typescript-eslint/parser": "^7.0.0",
+    "eslint": "^8.56.0",
+    "gulp": "^4.0.2",
+    "n8n-workflow": "*",
+    "prettier": "^3.2.0",
+    "typescript": "^5.3.0"
+  },
+  "peerDependencies": {
+    "n8n-workflow": "*"
+  }
+}
