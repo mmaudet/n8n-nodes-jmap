@@ -24,6 +24,8 @@ import {
 	getLabels,
 	deleteEmails,
 	getThreads,
+	getAttachments,
+	IAttachmentOptions,
 } from './GenericFunctions';
 
 export class Jmap implements INodeType {
@@ -139,6 +141,12 @@ export class Jmap implements INodeType {
 						action: 'Get an email',
 					},
 					{
+						name: 'Get Attachments',
+						value: 'getAttachments',
+						description: 'Download attachments from an email',
+						action: 'Get attachments from an email',
+					},
+					{
 						name: 'Get Labels',
 						value: 'getLabels',
 						description: 'Get all labels (mailboxes) for an email',
@@ -248,7 +256,7 @@ export class Jmap implements INodeType {
 
 			// ==================== EMAIL PARAMETERS ====================
 
-			// Email ID (for get, delete, markAsRead, markAsUnread, move, reply, addLabel, removeLabel, getLabels)
+			// Email ID (for get, delete, markAsRead, markAsUnread, move, reply, addLabel, removeLabel, getLabels, getAttachments)
 			{
 				displayName: 'Email ID',
 				name: 'emailId',
@@ -257,7 +265,7 @@ export class Jmap implements INodeType {
 				displayOptions: {
 					show: {
 						resource: ['email'],
-						operation: ['get', 'delete', 'markAsRead', 'markAsUnread', 'move', 'reply', 'addLabel', 'removeLabel', 'getLabels'],
+						operation: ['get', 'delete', 'markAsRead', 'markAsUnread', 'move', 'reply', 'addLabel', 'removeLabel', 'getLabels', 'getAttachments'],
 					},
 				},
 				default: '',
@@ -446,6 +454,38 @@ export class Jmap implements INodeType {
 				],
 			},
 
+			// Options for getAttachments
+			{
+				displayName: 'Options',
+				name: 'attachmentOptions',
+				type: 'collection',
+				placeholder: 'Add Option',
+				default: {},
+				displayOptions: {
+					show: {
+						resource: ['email'],
+						operation: ['getAttachments'],
+					},
+				},
+				options: [
+					{
+						displayName: 'Include Inline Images',
+						name: 'includeInline',
+						type: 'boolean',
+						default: false,
+						description: 'Whether to include inline images (embedded in the email body) in addition to regular attachments',
+					},
+					{
+						displayName: 'Filter by MIME Type',
+						name: 'mimeTypeFilter',
+						type: 'string',
+						default: '',
+						placeholder: 'application/pdf, image/*',
+						description: 'Comma-separated list of MIME types to include. Supports wildcards (e.g., image/*). Leave empty to include all.',
+					},
+				],
+			},
+
 			// Limit for getMany
 			{
 				displayName: 'Limit',
@@ -463,6 +503,90 @@ export class Jmap implements INodeType {
 				},
 				default: 50,
 				description: 'Max number of results to return',
+			},
+
+			// Options for getMany (search filters)
+			{
+				displayName: 'Options',
+				name: 'getManyOptions',
+				type: 'collection',
+				placeholder: 'Add Option',
+				default: {},
+				displayOptions: {
+					show: {
+						resource: ['email'],
+						operation: ['getMany'],
+					},
+				},
+				options: [
+					{
+						displayName: 'Flagged Only',
+						name: 'flaggedOnly',
+						type: 'boolean',
+						default: false,
+						description: 'Whether to return only flagged/starred emails',
+					},
+					{
+						displayName: 'From Contains',
+						name: 'from',
+						type: 'string',
+						default: '',
+						placeholder: 'sender@example.com',
+						description: 'Filter emails where the From address contains this text',
+					},
+					{
+						displayName: 'Full Text Search',
+						name: 'text',
+						type: 'string',
+						default: '',
+						placeholder: 'search terms',
+						description: 'Search in subject, body, and addresses',
+					},
+					{
+						displayName: 'Has Attachment',
+						name: 'hasAttachment',
+						type: 'boolean',
+						default: false,
+						description: 'Whether to return only emails with attachments',
+					},
+					{
+						displayName: 'Received After',
+						name: 'after',
+						type: 'dateTime',
+						default: '',
+						description: 'Filter emails received after this date',
+					},
+					{
+						displayName: 'Received Before',
+						name: 'before',
+						type: 'dateTime',
+						default: '',
+						description: 'Filter emails received before this date',
+					},
+					{
+						displayName: 'Subject Contains',
+						name: 'subject',
+						type: 'string',
+						default: '',
+						placeholder: 'Invoice',
+						description: 'Filter emails where the subject contains this text',
+					},
+					{
+						displayName: 'To Contains',
+						name: 'to',
+						type: 'string',
+						default: '',
+						placeholder: 'recipient@example.com',
+						description: 'Filter emails where the To address contains this text',
+					},
+					{
+						displayName: 'Unread Only',
+						name: 'unreadOnly',
+						type: 'boolean',
+						default: false,
+						description: 'Whether to return only unread emails',
+					},
+				],
 			},
 
 			// ==================== MAILBOX PARAMETERS ====================
@@ -638,13 +762,71 @@ export class Jmap implements INodeType {
 						};
 					}
 
+					if (operation === 'getAttachments') {
+						const emailId = this.getNodeParameter('emailId', i) as string;
+						const attachmentOptions = this.getNodeParameter('attachmentOptions', i) as IAttachmentOptions;
+
+						const attachmentResults = await getAttachments.call(
+							this,
+							accountId,
+							emailId,
+							attachmentOptions,
+						);
+
+						// getAttachments returns INodeExecutionData[] directly with binary data
+						// Add them directly to returnData instead of using responseData
+						for (const result of attachmentResults) {
+							returnData.push({
+								...result,
+								pairedItem: { item: i },
+							});
+						}
+						continue; // Skip the normal responseData handling
+					}
+
 					if (operation === 'getMany') {
 						const mailbox = this.getNodeParameter('mailbox', i) as string;
 						const limit = this.getNodeParameter('limit', i) as number;
+						const options = this.getNodeParameter('getManyOptions', i) as IDataObject;
 
 						const filter: IDataObject = {};
+
+						// Mailbox filter
 						if (mailbox) {
 							filter.inMailbox = mailbox;
+						}
+
+						// Date filters
+						if (options.after) {
+							filter.after = new Date(options.after as string).toISOString();
+						}
+						if (options.before) {
+							filter.before = new Date(options.before as string).toISOString();
+						}
+
+						// Content filters
+						if (options.from) {
+							filter.from = options.from;
+						}
+						if (options.to) {
+							filter.to = options.to;
+						}
+						if (options.subject) {
+							filter.subject = options.subject;
+						}
+						if (options.text) {
+							filter.text = options.text;
+						}
+
+						// Boolean filters
+						if (options.hasAttachment) {
+							filter.hasAttachment = true;
+						}
+						if (options.unreadOnly) {
+							filter.notKeyword = '$seen';
+						}
+						if (options.flaggedOnly) {
+							filter.hasKeyword = '$flagged';
 						}
 
 						const { ids } = await queryEmails.call(

@@ -5,7 +5,9 @@ import type {
 	IDataObject,
 	JsonObject,
 	IHttpRequestMethods,
-	IRequestOptions,
+	IHttpRequestOptions,
+	INodeExecutionData,
+	IBinaryData,
 } from 'n8n-workflow';
 import { NodeApiError } from 'n8n-workflow';
 
@@ -91,7 +93,7 @@ async function makeJmapRequest(
 
 	if (authType === 'jmapOAuth2Api') {
 		// Use n8n's built-in OAuth2 authentication
-		const response = await context.helpers.requestWithAuthentication.call(
+		const response = await context.helpers.httpRequestWithAuthentication.call(
 			context,
 			'jmapOAuth2Api',
 			{
@@ -103,7 +105,7 @@ async function makeJmapRequest(
 				},
 				body,
 				json: true,
-			},
+			} as IHttpRequestOptions,
 		);
 		return response as IDataObject;
 	} else {
@@ -111,30 +113,29 @@ async function makeJmapRequest(
 		const credentials = await context.getCredentials('jmapApi');
 		const authMethod = (credentials.authMethod as string) || 'basicAuth';
 
-		const options: IRequestOptions = {
+		const headers: Record<string, string> = {
+			'Content-Type': 'application/json',
+			Accept: 'application/json',
+		};
+
+		if (authMethod === 'basicAuth') {
+			const authString = Buffer.from(
+				`${credentials.email as string}:${credentials.password as string}`,
+			).toString('base64');
+			headers.Authorization = `Basic ${authString}`;
+		} else if (authMethod === 'bearerToken') {
+			headers.Authorization = `Bearer ${credentials.accessToken as string}`;
+		}
+
+		const options: IHttpRequestOptions = {
 			method,
-			uri: url,
-			headers: {
-				'Content-Type': 'application/json',
-				Accept: 'application/json',
-			},
+			url,
+			headers,
 			body,
 			json: true,
 		};
 
-		if (authMethod === 'basicAuth') {
-			options.auth = {
-				user: credentials.email as string,
-				pass: credentials.password as string,
-			};
-		} else if (authMethod === 'bearerToken') {
-			options.headers = {
-				...options.headers,
-				Authorization: `Bearer ${credentials.accessToken as string}`,
-			};
-		}
-
-		const response = await context.helpers.request(options);
+		const response = await context.helpers.httpRequest(options);
 		return response as IDataObject;
 	}
 }
@@ -645,37 +646,164 @@ export async function downloadBlob(
 		.replace('{type}', encodeURIComponent(type));
 
 	if (authType === 'jmapOAuth2Api') {
-		const response = await this.helpers.requestWithAuthentication.call(
+		const response = await this.helpers.httpRequestWithAuthentication.call(
 			this,
 			'jmapOAuth2Api',
 			{
 				method: 'GET',
 				url: downloadUrl,
-				encoding: null,
-			},
+				encoding: 'arraybuffer',
+			} as IHttpRequestOptions,
 		);
-		return response as Buffer;
+		return Buffer.from(response as ArrayBuffer);
 	} else {
 		const credentials = await this.getCredentials('jmapApi');
 		const authMethod = (credentials.authMethod as string) || 'basicAuth';
 
-		const options: IRequestOptions = {
-			method: 'GET' as IHttpRequestMethods,
-			uri: downloadUrl,
-			encoding: null,
-		};
+		const headers: Record<string, string> = {};
 
 		if (authMethod === 'basicAuth') {
-			options.auth = {
-				user: credentials.email as string,
-				pass: credentials.password as string,
-			};
+			const authString = Buffer.from(
+				`${credentials.email as string}:${credentials.password as string}`,
+			).toString('base64');
+			headers.Authorization = `Basic ${authString}`;
 		} else if (authMethod === 'bearerToken') {
-			options.headers = {
-				Authorization: `Bearer ${credentials.accessToken as string}`,
-			};
+			headers.Authorization = `Bearer ${credentials.accessToken as string}`;
 		}
 
-		return await this.helpers.request(options);
+		const options: IHttpRequestOptions = {
+			method: 'GET' as IHttpRequestMethods,
+			url: downloadUrl,
+			headers,
+			encoding: 'arraybuffer',
+		};
+
+		const response = await this.helpers.httpRequest(options);
+		return Buffer.from(response as ArrayBuffer);
 	}
+}
+
+/**
+ * Interface for attachment options
+ */
+export interface IAttachmentOptions {
+	includeInline?: boolean;
+	mimeTypeFilter?: string;
+}
+
+/**
+ * Interface for attachment metadata from JMAP
+ */
+interface IJmapAttachment {
+	blobId: string;
+	type: string;
+	name: string;
+	size: number;
+	cid?: string;
+	isInline?: boolean;
+	partId?: string;
+}
+
+/**
+ * Check if a MIME type matches a filter pattern
+ */
+function matchesMimeType(mimeType: string, filter: string): boolean {
+	const normalizedMime = mimeType.toLowerCase();
+	const normalizedFilter = filter.toLowerCase().trim();
+
+	if (normalizedFilter.endsWith('/*')) {
+		const prefix = normalizedFilter.slice(0, -1);
+		return normalizedMime.startsWith(prefix);
+	}
+
+	return normalizedMime === normalizedFilter;
+}
+
+/**
+ * Get attachments from an email and return them as binary data.
+ * Each attachment is returned as a separate item with binary data in the 'file' field.
+ * To extract archives (ZIP, tar.gz), chain with the n8n Compression node.
+ */
+export async function getAttachments(
+	this: IExecuteFunctions,
+	accountId: string,
+	emailId: string,
+	options: IAttachmentOptions = {},
+): Promise<INodeExecutionData[]> {
+	const { includeInline = false, mimeTypeFilter = '' } = options;
+
+	// Get email with attachments metadata
+	const emails = await getEmails.call(this, accountId, [emailId], [
+		'id',
+		'subject',
+		'attachments',
+	]);
+
+	if (emails.length === 0) {
+		throw new Error(`Email with ID ${emailId} not found`);
+	}
+
+	const email = emails[0];
+	const attachments = (email.attachments as IJmapAttachment[]) || [];
+
+	if (attachments.length === 0) {
+		return [];
+	}
+
+	// Parse MIME type filters
+	const mimeFilters = mimeTypeFilter
+		? mimeTypeFilter.split(',').map((f) => f.trim()).filter((f) => f)
+		: [];
+
+	const results: INodeExecutionData[] = [];
+	let attachmentIndex = 0;
+
+	for (const attachment of attachments) {
+		// Filter by inline status
+		if (attachment.isInline && !includeInline) {
+			continue;
+		}
+
+		// Filter by MIME type
+		if (mimeFilters.length > 0) {
+			const matches = mimeFilters.some((filter) => matchesMimeType(attachment.type, filter));
+			if (!matches) {
+				continue;
+			}
+		}
+
+		// Download the attachment
+		const buffer = await downloadBlob.call(
+			this,
+			accountId,
+			attachment.blobId,
+			attachment.name,
+			attachment.type,
+		);
+
+		// Prepare binary data for n8n
+		const binaryData: IBinaryData = await this.helpers.prepareBinaryData(
+			buffer,
+			attachment.name,
+			attachment.type,
+		);
+
+		results.push({
+			json: {
+				emailId: email.id,
+				emailSubject: email.subject,
+				attachmentIndex,
+				fileName: attachment.name,
+				mimeType: attachment.type,
+				fileSize: attachment.size,
+				isInline: attachment.isInline || false,
+			},
+			binary: {
+				file: binaryData,
+			},
+		});
+		attachmentIndex++;
+	}
+
+	return results;
 }
