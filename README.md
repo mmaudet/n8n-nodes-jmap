@@ -276,7 +276,7 @@ Learn more: [jmap.io](https://jmap.io/)
 
 ## License
 
-AGPL-3.0
+MIT
 
 ---
 

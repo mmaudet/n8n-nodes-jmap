@@ -1,6 +1,6 @@
 {
   "name": "n8n-nodes-jmap",
-  "version": "0.2.5",
+  "version": "0.2.6",
   "description": "n8n community node for JMAP email protocol (RFC 8620/8621) - Works with Apache James, Twake Mail, Fastmail, and other JMAP-compatible servers",
   "keywords": [
     "n8n-community-node-package",
@@ -12,7 +12,7 @@
     "rfc8620",
     "rfc8621"
   ],
-  "license": "AGPL-3.0",
+  "license": "MIT",
   "homepage": "https://github.com/mmaudet/n8n-nodes-jmap",
   "author": {
     "name": "Michel-Marie Maudet",
