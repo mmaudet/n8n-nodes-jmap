@@ -29,38 +29,6 @@ Then restart n8n.
 
 ---
 
-## Features
-
-### Advanced Email Search
-
-The **Get Many** operation supports powerful search filters based on JMAP RFC 8621:
-
-| Filter | Description |
-|--------|-------------|
-| **Received After** | Emails received after a specific date |
-| **Received Before** | Emails received before a specific date |
-| **From Contains** | Filter by sender address |
-| **To Contains** | Filter by recipient address |
-| **Subject Contains** | Filter by subject line |
-| **Full Text Search** | Search in subject, body, and addresses |
-| **Has Attachment** | Only emails with attachments |
-| **Unread Only** | Only unread emails |
-| **Flagged Only** | Only starred/flagged emails |
-
-Combine multiple filters for precise email retrieval.
-
-### Attachment Handling
-
-The **Get Attachments** operation downloads email attachments as binary data, ready to use with other n8n nodes:
-
-- **Inline image filtering**: Exclude embedded images (signatures, logos) by default
-- **MIME type filtering**: Filter by file type (e.g., `application/pdf`, `image/*`)
-- **Native compatibility**: Works seamlessly with n8n's Compression, Google Drive, S3, and other nodes
-
-Example workflow: `JMAP Trigger` > `Get Attachments` > `Compression` (extract ZIP) > `Google Drive` (upload)
-
----
-
 ## Authentication
 
 This node supports **three authentication methods** to connect to JMAP servers.
@@ -179,6 +147,38 @@ Polling-based trigger for new emails.
 - **Simple Output**: Return simplified email data
 - **Include Attachments Info**: Include attachment metadata
 - **Mark as Read**: Automatically mark fetched emails as read
+
+---
+
+## Features
+
+### Advanced Email Search
+
+The **Get Many** operation supports powerful search filters based on JMAP RFC 8621:
+
+| Filter | Description |
+|--------|-------------|
+| **Received After** | Emails received after a specific date |
+| **Received Before** | Emails received before a specific date |
+| **From Contains** | Filter by sender address |
+| **To Contains** | Filter by recipient address |
+| **Subject Contains** | Filter by subject line |
+| **Full Text Search** | Search in subject, body, and addresses |
+| **Has Attachment** | Only emails with attachments |
+| **Unread Only** | Only unread emails |
+| **Flagged Only** | Only starred/flagged emails |
+
+Combine multiple filters for precise email retrieval.
+
+### Attachment Handling
+
+The **Get Attachments** operation downloads email attachments as binary data, ready to use with other n8n nodes:
+
+- **Inline image filtering**: Exclude embedded images (signatures, logos) by default
+- **MIME type filtering**: Filter by file type (e.g., `application/pdf`, `image/*`)
+- **Native compatibility**: Works seamlessly with n8n's Compression, Google Drive, S3, and other nodes
+
+Example workflow: `JMAP Trigger` > `Get Attachments` > `Compression` (extract ZIP) > `Google Drive` (upload)
 
 ---
 
