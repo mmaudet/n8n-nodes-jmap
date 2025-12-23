@@ -659,7 +659,14 @@ export class Jmap implements INodeType {
 
 		const accountId = await getPrimaryAccountId.call(this);
 
-		for (let i = 0; i < items.length; i++) {
+		// Operations that should only run once, regardless of input items
+		const singleExecutionOperations = [
+			'getMany', // Email/Mailbox/Thread getMany - query with filters, not per-item
+		];
+
+		const itemsToProcess = singleExecutionOperations.includes(operation) ? 1 : items.length;
+
+		for (let i = 0; i < itemsToProcess; i++) {
 			try {
 				let responseData: IDataObject | IDataObject[] = {};
 
