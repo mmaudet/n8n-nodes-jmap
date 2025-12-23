@@ -29,12 +29,14 @@ import {
 } from './GenericFunctions';
 
 export class Jmap implements INodeType {
+	// @ts-ignore - usableAsTool not in type definitions
 	description: INodeTypeDescription = {
 		displayName: 'JMAP',
 		name: 'jmap',
 		icon: 'file:jmap.svg',
 		group: ['transform'],
 		version: 1,
+		usableAsTool: true,
 		subtitle: '={{$parameter["operation"] + ": " + $parameter["resource"]}}',
 		description: 'Interact with JMAP email servers (Apache James, Twake Mail, etc.)',
 		defaults: {

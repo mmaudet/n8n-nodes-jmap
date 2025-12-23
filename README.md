@@ -182,6 +182,32 @@ Example workflow: `JMAP Trigger` > `Get Attachments` > `Compression` (extract ZI
 
 ---
 
+## AI Agent Integration
+
+This node can be used as a tool by n8n AI Agents, enabling autonomous email operations.
+
+### Setup
+
+1. Ensure you're using n8n version 1.x or later
+2. The node will automatically appear in the AI Agent's tool list
+
+### Example Use Cases
+
+- **Email assistant**: Let the AI read, search, and respond to emails
+- **Automated triage**: AI categorizes and labels incoming emails
+- **Smart notifications**: AI analyzes email content and triggers actions
+
+### Supported Operations as AI Tool
+
+The AI Agent can use all JMAP operations:
+- Search emails with natural language queries
+- Read and analyze email content
+- Send replies based on context
+- Organize emails (labels, folders, flags)
+- Download and process attachments
+
+---
+
 ## Contributing
 
 Contributions are welcome! This project is open source and we encourage the community to help improve it.
