@@ -4,7 +4,7 @@ Community node for [n8n](https://n8n.io/) to interact with JMAP email servers ([
 
 Compatible with:
 - [Apache James](https://james.apache.org/)
-- [Twake Mail](https://twake.app/)
+- [Twake Mail](https://twake.app/) by [LINAGORA](https://linagora.com/)
 - [Stalwart Mail Server](https://stalw.art/)
 - [Fastmail](https://www.fastmail.com/)
 - Any JMAP-compliant email server
@@ -26,6 +26,38 @@ npm install n8n-nodes-jmap
 ```
 
 Then restart n8n.
+
+---
+
+## Features
+
+### Advanced Email Search
+
+The **Get Many** operation supports powerful search filters based on JMAP RFC 8621:
+
+| Filter | Description |
+|--------|-------------|
+| **Received After** | Emails received after a specific date |
+| **Received Before** | Emails received before a specific date |
+| **From Contains** | Filter by sender address |
+| **To Contains** | Filter by recipient address |
+| **Subject Contains** | Filter by subject line |
+| **Full Text Search** | Search in subject, body, and addresses |
+| **Has Attachment** | Only emails with attachments |
+| **Unread Only** | Only unread emails |
+| **Flagged Only** | Only starred/flagged emails |
+
+Combine multiple filters for precise email retrieval.
+
+### Attachment Handling
+
+The **Get Attachments** operation downloads email attachments as binary data, ready to use with other n8n nodes:
+
+- **Inline image filtering**: Exclude embedded images (signatures, logos) by default
+- **MIME type filtering**: Filter by file type (e.g., `application/pdf`, `image/*`)
+- **Native compatibility**: Works seamlessly with n8n's Compression, Google Drive, S3, and other nodes
+
+Example workflow: `JMAP Trigger` > `Get Attachments` > `Compression` (extract ZIP) > `Google Drive` (upload)
 
 ---
 
@@ -119,7 +151,8 @@ Main node for email operations.
 | Email | Send | Send a new email |
 | Email | Reply | Reply to an existing email |
 | Email | Get | Retrieve an email by ID |
-| Email | Get Many | List emails (with optional mailbox filter) |
+| Email | Get Many | List emails with advanced search filters |
+| Email | Get Attachments | Download attachments as binary data |
 | Email | Create Draft | Create a draft without sending |
 | Email | Delete | Delete an email |
 | Email | Mark as Read | Mark email as read |
@@ -149,9 +182,34 @@ Polling-based trigger for new emails.
 
 ---
 
-## Development
+## Contributing
+
+Contributions are welcome! This project is open source and we encourage the community to help improve it.
+
+### How to Contribute
+
+1. **Fork** the repository
+2. **Create a branch** for your feature or fix: `git checkout -b feature/my-feature`
+3. **Make your changes** and test them locally
+4. **Run linting**: `npm run lint`
+5. **Commit** with a clear message
+6. **Push** to your fork and open a **Pull Request**
+
+### Ideas for Contributions
+
+- Support for additional JMAP capabilities (Calendar, Contacts)
+- Improved error handling and messages
+- Additional search filters
+- Documentation improvements
+- Bug fixes and optimizations
+
+### Local Development
 
 ```bash
+# Clone your fork
+git clone https://github.com/YOUR_USERNAME/n8n-nodes-jmap.git
+cd n8n-nodes-jmap
+
 # Install dependencies
 npm install
 
@@ -168,14 +226,11 @@ npm run lint
 npm run format
 ```
 
-### Local Testing
+### Testing Locally with n8n
 
 ```bash
-# Link for local n8n development
-npm link
-
-# In your n8n installation
-npm link n8n-nodes-jmap
+# Start n8n with the local node
+N8N_CUSTOM_EXTENSIONS="/path/to/n8n-nodes-jmap" n8n start
 ```
 
 ---
@@ -201,4 +256,6 @@ AGPL-3.0
 
 ## Author
 
-[Michel-Marie Maudet](https://github.com/mmaudet)
+[Michel-Marie MAUDET](https://github.com/mmaudet)
+
+This project is developed with the support of [LINAGORA](https://linagora.com/) and [Twake](https://twake.app/).

@@ -760,7 +760,11 @@ export async function getAttachments(
 
 	for (const attachment of attachments) {
 		// Filter by inline status
-		if (attachment.isInline && !includeInline) {
+		// An attachment is considered inline if:
+		// - isInline is explicitly true, OR
+		// - it has a cid (Content-ID) which is used for inline images in HTML
+		const isInlineAttachment = attachment.isInline === true || (attachment.cid !== undefined && attachment.cid !== null);
+		if (isInlineAttachment && !includeInline) {
 			continue;
 		}
 
@@ -796,7 +800,8 @@ export async function getAttachments(
 				fileName: attachment.name,
 				mimeType: attachment.type,
 				fileSize: attachment.size,
-				isInline: attachment.isInline || false,
+				isInline: isInlineAttachment,
+				cid: attachment.cid || null,
 			},
 			binary: {
 				file: binaryData,
