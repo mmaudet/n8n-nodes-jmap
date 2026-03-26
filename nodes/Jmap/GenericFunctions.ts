@@ -9,7 +9,7 @@ import type {
 	INodeExecutionData,
 	IBinaryData,
 } from 'n8n-workflow';
-import { NodeApiError } from 'n8n-workflow';
+import { NodeApiError, NodeOperationError } from 'n8n-workflow';
 
 export interface IJmapSession {
 	accounts: { [key: string]: IJmapAccount };
@@ -168,7 +168,7 @@ export async function getPrimaryAccountId(
 		return accountIds[0];
 	}
 
-	throw new Error('No JMAP account found');
+	throw new NodeOperationError(this.getNode(), 'No JMAP account found');
 }
 
 /**
@@ -188,7 +188,7 @@ export async function getMailboxes(
 		return (methodResponse[1] as IDataObject).list as IDataObject[];
 	}
 
-	throw new Error('Failed to get mailboxes');
+	throw new NodeOperationError(this.getNode(), 'Failed to get mailboxes');
 }
 
 /**
@@ -246,7 +246,7 @@ export async function queryEmails(
 		};
 	}
 
-	throw new Error('Failed to query emails');
+	throw new NodeOperationError(this.getNode(), 'Failed to query emails');
 }
 
 /**
@@ -288,7 +288,7 @@ export async function getEmails(
 		return (methodResponse[1] as IDataObject).list as IDataObject[];
 	}
 
-	throw new Error('Failed to get emails');
+	throw new NodeOperationError(this.getNode(), 'Failed to get emails');
 }
 
 /**
@@ -302,7 +302,7 @@ export async function sendEmail(
 ): Promise<IDataObject> {
 	const draftsMailbox = await findMailboxByRole.call(this, accountId, 'drafts');
 	if (!draftsMailbox) {
-		throw new Error('Drafts mailbox not found');
+		throw new NodeOperationError(this.getNode(), 'Drafts mailbox not found');
 	}
 
 	const emailCreate = {
@@ -330,7 +330,7 @@ export async function sendEmail(
 
 	for (const methodResponse of response.methodResponses) {
 		if (methodResponse[0] === 'error') {
-			throw new Error(`JMAP error: ${JSON.stringify(methodResponse[1])}`);
+			throw new NodeOperationError(this.getNode(), `JMAP error: ${JSON.stringify(methodResponse[1])}`);
 		}
 	}
 
@@ -347,7 +347,7 @@ export async function createDraft(
 ): Promise<IDataObject> {
 	const draftsMailbox = await findMailboxByRole.call(this, accountId, 'drafts');
 	if (!draftsMailbox) {
-		throw new Error('Drafts mailbox not found');
+		throw new NodeOperationError(this.getNode(), 'Drafts mailbox not found');
 	}
 
 	const emailCreate = {
@@ -363,7 +363,7 @@ export async function createDraft(
 
 	const methodResponse = response.methodResponses[0];
 	if (methodResponse[0] === 'error') {
-		throw new Error(`JMAP error: ${JSON.stringify(methodResponse[1])}`);
+		throw new NodeOperationError(this.getNode(), `JMAP error: ${JSON.stringify(methodResponse[1])}`);
 	}
 
 	if (methodResponse[0] === 'Email/set') {
@@ -395,7 +395,7 @@ export async function getIdentities(
 		return (methodResponse[1] as IDataObject).list as IDataObject[];
 	}
 
-	throw new Error('Failed to get identities');
+	throw new NodeOperationError(this.getNode(), 'Failed to get identities');
 }
 
 /**
@@ -417,7 +417,7 @@ export async function updateEmailKeywords(
 		return methodResponse[1] as IDataObject;
 	}
 
-	throw new Error('Failed to update email');
+	throw new NodeOperationError(this.getNode(), 'Failed to update email');
 }
 
 /**
@@ -448,7 +448,7 @@ export async function moveEmail(
 		return methodResponse[1] as IDataObject;
 	}
 
-	throw new Error('Failed to move email');
+	throw new NodeOperationError(this.getNode(), 'Failed to move email');
 }
 
 /**
@@ -479,7 +479,7 @@ export async function addLabel(
 		return methodResponse[1] as IDataObject;
 	}
 
-	throw new Error('Failed to add label');
+	throw new NodeOperationError(this.getNode(), 'Failed to add label');
 }
 
 /**
@@ -510,7 +510,7 @@ export async function removeLabel(
 		return methodResponse[1] as IDataObject;
 	}
 
-	throw new Error('Failed to remove label');
+	throw new NodeOperationError(this.getNode(), 'Failed to remove label');
 }
 
 /**
@@ -524,7 +524,7 @@ export async function getLabels(
 	const emails = await getEmails.call(this, accountId, [emailId], ['id', 'mailboxIds']);
 
 	if (emails.length === 0) {
-		throw new Error('Email not found');
+		throw new NodeOperationError(this.getNode(), 'Email not found');
 	}
 
 	const email = emails[0];
@@ -573,7 +573,7 @@ export async function deleteEmails(
 		return methodResponse[1] as IDataObject;
 	}
 
-	throw new Error('Failed to delete emails');
+	throw new NodeOperationError(this.getNode(), 'Failed to delete emails');
 }
 
 /**
@@ -594,7 +594,7 @@ export async function getThreads(
 		return (methodResponse[1] as IDataObject).list as IDataObject[];
 	}
 
-	throw new Error('Failed to get threads');
+	throw new NodeOperationError(this.getNode(), 'Failed to get threads');
 }
 
 /**
@@ -685,7 +685,7 @@ export async function getAttachments(
 	]);
 
 	if (emails.length === 0) {
-		throw new Error(`Email with ID ${emailId} not found`);
+		throw new NodeOperationError(this.getNode(), `Email with ID ${emailId} not found`);
 	}
 
 	const email = emails[0];
