@@ -1,6 +1,9 @@
 import {
+	IAuthenticate,
+	ICredentialDataDecryptedObject,
 	ICredentialTestRequest,
 	ICredentialType,
+	IHttpRequestOptions,
 	INodeProperties,
 } from 'n8n-workflow';
 
@@ -89,6 +92,31 @@ export class JmapApi implements ICredentialType {
 		},
 	];
 
+	authenticate: IAuthenticate = async (
+		credentials: ICredentialDataDecryptedObject,
+		requestOptions: IHttpRequestOptions,
+	): Promise<IHttpRequestOptions> => {
+		const authMethod = (credentials.authMethod as string) || 'basicAuth';
+
+		if (authMethod === 'bearerToken') {
+			const token = credentials.accessToken as string;
+			requestOptions.headers = {
+				...requestOptions.headers,
+				Authorization: `Bearer ${token}`,
+			};
+		} else {
+			const email = credentials.email as string;
+			const password = credentials.password as string;
+			const encoded = Buffer.from(`${email}:${password}`).toString('base64');
+			requestOptions.headers = {
+				...requestOptions.headers,
+				Authorization: `Basic ${encoded}`,
+			};
+		}
+
+		return requestOptions;
+	};
+
 	test: ICredentialTestRequest = {
 		request: {
 			baseURL: '={{$credentials.serverUrl}}',
@@ -96,10 +124,6 @@ export class JmapApi implements ICredentialType {
 			method: 'GET',
 			headers: {
 				Accept: 'application/json',
-			},
-			auth: {
-				username: '={{$credentials.email}}',
-				password: '={{$credentials.password}}',
 			},
 		},
 	};
