@@ -38,7 +38,8 @@
   "n8n": {
     "n8nNodesApiVersion": 1,
     "credentials": [
-      "dist/credentials/JmapApi.credentials.js",
+      "dist/credentials/JmapBasicAuthApi.credentials.js",
+      "dist/credentials/JmapBearerTokenApi.credentials.js",
       "dist/credentials/JmapOAuth2Api.credentials.js"
     ],
     "nodes": [
