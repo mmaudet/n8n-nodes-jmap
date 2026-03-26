@@ -1,4 +1,5 @@
 import {
+	Icon,
 	ICredentialTestRequest,
 	ICredentialType,
 	INodeProperties,
@@ -13,6 +14,10 @@ export class JmapApi implements ICredentialType {
 	name = 'jmapApi';
 	displayName = 'JMAP API';
 	documentationUrl = 'https://jmap.io/spec-core.html';
+	icon: Icon = {
+		light: 'file:../nodes/Jmap/jmap.svg',
+		dark: 'file:../nodes/Jmap/jmap.svg',
+	};
 	properties: INodeProperties[] = [
 		{
 			displayName: 'JMAP Server URL',
