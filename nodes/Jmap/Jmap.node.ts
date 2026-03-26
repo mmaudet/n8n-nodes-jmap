@@ -6,6 +6,7 @@ import {
 	INodeType,
 	INodeTypeDescription,
 	IDataObject,
+	NodeConnectionTypes,
 	NodeOperationError,
 } from 'n8n-workflow';
 
@@ -42,8 +43,8 @@ export class Jmap implements INodeType {
 		defaults: {
 			name: 'JMAP',
 		},
-		inputs: ['main'],
-		outputs: ['main'],
+		inputs: [NodeConnectionTypes.Main],
+		outputs: [NodeConnectionTypes.Main],
 		credentials: [
 			{
 				name: 'jmapApi',

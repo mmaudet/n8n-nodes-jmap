@@ -6,6 +6,7 @@ import {
 	INodeType,
 	INodeTypeDescription,
 	IPollFunctions,
+	NodeConnectionTypes,
 } from 'n8n-workflow';
 
 import {
@@ -28,7 +29,7 @@ export class JmapTrigger implements INodeType {
 			name: 'JMAP Trigger',
 		},
 		inputs: [],
-		outputs: ['main'],
+		outputs: [NodeConnectionTypes.Main],
 		credentials: [
 			{
 				name: 'jmapApi',
