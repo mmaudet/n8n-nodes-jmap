@@ -31,11 +31,20 @@ export class JmapTrigger implements INodeType {
 		outputs: ['main'],
 		credentials: [
 			{
-				name: 'jmapApi',
+				name: 'jmapBasicAuthApi',
 				required: true,
 				displayOptions: {
 					show: {
-						authentication: ['jmapApi'],
+						authentication: ['jmapBasicAuthApi'],
+					},
+				},
+			},
+			{
+				name: 'jmapBearerTokenApi',
+				required: true,
+				displayOptions: {
+					show: {
+						authentication: ['jmapBearerTokenApi'],
 					},
 				},
 			},
@@ -62,8 +71,12 @@ export class JmapTrigger implements INodeType {
 						value: 'jmapOAuth2Api',
 					},
 					{
-						name: 'Basic Auth / Bearer Token',
-						value: 'jmapApi',
+						name: 'Basic Auth',
+						value: 'jmapBasicAuthApi',
+					},
+					{
+						name: 'Bearer Token',
+						value: 'jmapBearerTokenApi',
 					},
 				],
 				default: 'jmapOAuth2Api',

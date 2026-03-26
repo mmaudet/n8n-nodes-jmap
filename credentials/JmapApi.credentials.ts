@@ -1,17 +1,18 @@
-import {
-	ICredentialTestRequest,
+import type {
 	ICredentialType,
 	INodeProperties,
 } from 'n8n-workflow';
 
 /**
- * JMAP API Credentials for Basic Auth or Bearer Token authentication
+ * @deprecated Use JmapBasicAuthApi or JmapBearerTokenApi instead.
  *
- * For OAuth2/OIDC with LemonLDAP, use the JmapOAuth2Api credentials instead.
+ * This credential type is kept for backward compatibility only.
+ * It has been replaced by separate credential types that use
+ * httpRequestWithAuthentication via IAuthenticateGeneric.
  */
 export class JmapApi implements ICredentialType {
 	name = 'jmapApi';
-	displayName = 'JMAP API';
+	displayName = 'JMAP API (Deprecated)';
 	documentationUrl = 'https://jmap.io/spec-core.html';
 	properties: INodeProperties[] = [
 		{
@@ -20,87 +21,8 @@ export class JmapApi implements ICredentialType {
 			type: 'string',
 			default: 'https://jmap.example.com/jmap',
 			placeholder: 'https://jmap.example.com/jmap',
-			description: 'The base URL of the JMAP server',
+			description: 'The base URL of the JMAP server. This credential type is deprecated. Please use "JMAP Basic Auth API" or "JMAP Bearer Token API" instead.',
 			required: true,
-		},
-		{
-			displayName: 'Authentication Method',
-			name: 'authMethod',
-			type: 'options',
-			options: [
-				{
-					name: 'Basic Auth',
-					value: 'basicAuth',
-					description: 'Authenticate with email and password',
-				},
-				{
-					name: 'Bearer Token',
-					value: 'bearerToken',
-					description: 'Authenticate with an existing access token',
-				},
-			],
-			default: 'basicAuth',
-		},
-		// Basic Auth fields
-		{
-			displayName: 'Email',
-			name: 'email',
-			type: 'string',
-			placeholder: 'user@example.com',
-			default: '',
-			required: true,
-			displayOptions: {
-				show: {
-					authMethod: ['basicAuth'],
-				},
-			},
-		},
-		{
-			displayName: 'Password',
-			name: 'password',
-			type: 'string',
-			typeOptions: {
-				password: true,
-			},
-			default: '',
-			required: true,
-			displayOptions: {
-				show: {
-					authMethod: ['basicAuth'],
-				},
-			},
-		},
-		// Bearer Token field
-		{
-			displayName: 'Access Token',
-			name: 'accessToken',
-			type: 'string',
-			typeOptions: {
-				password: true,
-			},
-			default: '',
-			required: true,
-			description: 'The access token (e.g., from OAuth2/OIDC)',
-			displayOptions: {
-				show: {
-					authMethod: ['bearerToken'],
-				},
-			},
 		},
 	];
-
-	test: ICredentialTestRequest = {
-		request: {
-			baseURL: '={{$credentials.serverUrl}}',
-			url: '/session',
-			method: 'GET',
-			headers: {
-				Accept: 'application/json',
-			},
-			auth: {
-				username: '={{$credentials.email}}',
-				password: '={{$credentials.password}}',
-			},
-		},
-	};
 }

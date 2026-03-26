@@ -73,7 +73,8 @@ async function getServerUrl(
 		const credentials = await context.getCredentials('jmapOAuth2Api');
 		return (credentials.jmapServerUrl as string).replace(/\/$/, '');
 	} else {
-		const credentials = await context.getCredentials('jmapApi');
+		// Both jmapBasicAuthApi and jmapBearerTokenApi use 'serverUrl'
+		const credentials = await context.getCredentials(authType);
 		return (credentials.serverUrl as string).replace(/\/$/, '');
 	}
 }
@@ -91,53 +92,23 @@ async function makeJmapRequest(
 	const serverUrl = await getServerUrl(context);
 	const url = endpoint.startsWith('http') ? endpoint : `${serverUrl}${endpoint}`;
 
-	if (authType === 'jmapOAuth2Api') {
-		// Use n8n's built-in OAuth2 authentication
-		const response = await context.helpers.httpRequestWithAuthentication.call(
-			context,
-			'jmapOAuth2Api',
-			{
-				method,
-				url,
-				headers: {
-					'Content-Type': 'application/json',
-					Accept: 'application/json',
-				},
-				body,
-				json: true,
-			} as IHttpRequestOptions,
-		);
-		return response as IDataObject;
-	} else {
-		// Use Basic Auth or Bearer Token
-		const credentials = await context.getCredentials('jmapApi');
-		const authMethod = (credentials.authMethod as string) || 'basicAuth';
-
-		const headers: Record<string, string> = {
+	const requestOptions: IHttpRequestOptions = {
+		method,
+		url,
+		headers: {
 			'Content-Type': 'application/json',
 			Accept: 'application/json',
-		};
+		},
+		body,
+		json: true,
+	};
 
-		if (authMethod === 'basicAuth') {
-			const authString = Buffer.from(
-				`${credentials.email as string}:${credentials.password as string}`,
-			).toString('base64');
-			headers.Authorization = `Basic ${authString}`;
-		} else if (authMethod === 'bearerToken') {
-			headers.Authorization = `Bearer ${credentials.accessToken as string}`;
-		}
-
-		const options: IHttpRequestOptions = {
-			method,
-			url,
-			headers,
-			body,
-			json: true,
-		};
-
-		const response = await context.helpers.httpRequest(options);
-		return response as IDataObject;
-	}
+	const response = await context.helpers.httpRequestWithAuthentication.call(
+		context,
+		authType,
+		requestOptions,
+	);
+	return response as IDataObject;
 }
 
 /**
@@ -645,42 +616,16 @@ export async function downloadBlob(
 		.replace('{name}', encodeURIComponent(name))
 		.replace('{type}', encodeURIComponent(type));
 
-	if (authType === 'jmapOAuth2Api') {
-		const response = await this.helpers.httpRequestWithAuthentication.call(
-			this,
-			'jmapOAuth2Api',
-			{
-				method: 'GET',
-				url: downloadUrl,
-				encoding: 'arraybuffer',
-			} as IHttpRequestOptions,
-		);
-		return Buffer.from(response as ArrayBuffer);
-	} else {
-		const credentials = await this.getCredentials('jmapApi');
-		const authMethod = (credentials.authMethod as string) || 'basicAuth';
-
-		const headers: Record<string, string> = {};
-
-		if (authMethod === 'basicAuth') {
-			const authString = Buffer.from(
-				`${credentials.email as string}:${credentials.password as string}`,
-			).toString('base64');
-			headers.Authorization = `Basic ${authString}`;
-		} else if (authMethod === 'bearerToken') {
-			headers.Authorization = `Bearer ${credentials.accessToken as string}`;
-		}
-
-		const options: IHttpRequestOptions = {
-			method: 'GET' as IHttpRequestMethods,
+	const response = await this.helpers.httpRequestWithAuthentication.call(
+		this,
+		authType,
+		{
+			method: 'GET',
 			url: downloadUrl,
-			headers,
 			encoding: 'arraybuffer',
-		};
-
-		const response = await this.helpers.httpRequest(options);
-		return Buffer.from(response as ArrayBuffer);
-	}
+		} as IHttpRequestOptions,
+	);
+	return Buffer.from(response as ArrayBuffer);
 }
 
 /**
