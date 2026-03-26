@@ -88,15 +88,4 @@ export class JmapOAuth2Api implements ICredentialType {
 			default: 'body',
 		},
 	];
-
-	// OAuth2 flow configuration
-	oauth2 = {
-		tokenExpiredStatusCode: 401,
-		grantType: 'pkce',
-		scope: 'openid email profile offline_access',
-		tokenRequestMethod: 'POST' as const,
-		authorizeUrl: { url: '={{ $credentials.authUrl }}' },
-		accessTokenUrl: { url: '={{ $credentials.accessTokenUrl }}' },
-		clientAuthentication: 'body' as const,
-	};
 }
